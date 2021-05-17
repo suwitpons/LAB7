@@ -52,6 +52,19 @@ float EncoderVel = 0;
 uint64_t Timestamp_Encoder = 0;
 float w = 0;
 float RPM = 0 ;
+float PWMO1 =0 ;
+float PWMO2 = 0 ;
+float e  = 0 ;
+float constant = 0;
+float Kp = 0.1;
+float Ki = 0.000001;
+float Kd = 0.000001;
+float PID = 0;
+float e0 = 0;
+float sum_e = 0;
+float X = 0;
+
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -108,8 +121,8 @@ int main(void)
 	HAL_TIM_Base_Start_IT(&htim2);
 	HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
 	HAL_TIM_Base_Start_IT(&htim5);
-	HAL_TIM_PWM_Start(htim2, TIM_CHANNEL_1);
-	HAL_TIM_PWM_Start(htim2, TIM_CHANNEL_2);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_1);
+	HAL_TIM_PWM_Start(&htim2, TIM_CHANNEL_2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -134,9 +147,25 @@ int main(void)
 		{
 			Timestamp_Encoder = micros();
 			EncoderVel = (EncoderVel * 99 + EncoderVelocity_Update()) / 100.0   ;    //ไม่เสถียร
-			w = EncoderVel / 3072; // แปลงให้เป็น 1 รอบ
+			w = EncoderVel / 3072; // �?ปลงให้เป็น 1 รอบ
 			RPM = w * 60 ;
-
+			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,PWMO1);
+			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2,PWMO2);
+			e = constant - RPM;
+			sum_e += e;
+			PID = (Kp*e) + (Ki*sum_e*1000000/Timestamp_Encoder) + (Kd*(e - e0)/0.0001);
+			e0 = e;
+			X += PID;
+			if(constant > 0)
+			{
+				PWMO1 = 0 ;
+				PWMO2 = X ;
+			}
+			if(constant < 0)
+			{
+				PWMO1 = -X ;
+				PWMO2 = 0 ;
+			}
 		}
 
 	}
@@ -259,7 +288,7 @@ static void MX_TIM2_Init(void)
   htim2.Instance = TIM2;
   htim2.Init.Prescaler = 99;
   htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim2.Init.Period = 1000000;
+  htim2.Init.Period = 10000;
   htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
