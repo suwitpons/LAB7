@@ -166,6 +166,11 @@ int main(void)
 				PWMO1 = -X ;
 				PWMO2 = 0 ;
 			}
+			if(constant == 0)
+			{
+				PWMO1 = 0 ;
+				PWMO2 = 0 ;
+			}
 		}
 
 	}
