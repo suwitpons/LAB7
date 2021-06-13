@@ -56,9 +56,9 @@ float PWMO1 =0 ;
 float PWMO2 = 0 ;
 float e  = 0 ;
 float constant = 0;
-float Kp = 0.1;
+float Kp = 2.5;
 float Ki = 0.000001;
-float Kd = 0.000001;
+float Kd = 0.55;
 float PID = 0;
 float e0 = 0;
 float sum_e = 0;
@@ -149,8 +149,6 @@ int main(void)
 			EncoderVel = (EncoderVel * 99 + EncoderVelocity_Update()) / 100.0   ;    //ไม่เสถียร
 			w = EncoderVel / 3072; // �?ปลงให้เป็น 1 รอบ
 			RPM = w * 60 ;
-			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,PWMO1);
-			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2,PWMO2);
 			e = constant - RPM;
 			sum_e += e;
 			PID = (Kp*e) + (Ki*sum_e*1000000/Timestamp_Encoder) + (Kd*(e - e0)/0.0001);
@@ -171,6 +169,8 @@ int main(void)
 				PWMO1 = 0 ;
 				PWMO2 = 0 ;
 			}
+			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1,PWMO1);
+			__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_2,PWMO2);
 		}
 
 	}
